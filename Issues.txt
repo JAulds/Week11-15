@@ -1,3 +1,10 @@
 Unable to resolve "react-native-gesture-handler" from "node_modules\@react-navigation\stack\lib\module\views\GestureHandlerNative.js"
 
 Unable to resolve "prop-types" from "node_modules\react-native-swipe-list-view\components\SwipeListView.js"
+
+ (NOBRIDGE) ERROR  Database initialization error: [TypeError: Cannot read property 'execAsync' of undefined]
+ (NOBRIDGE) ERROR  Initialization error: [TypeError: Cannot read property 'execAsync' of undefined]
+
+    Solution:  use db.withExclusiveTransactionAsync inside of database.js instead of db.withTransactionAsync
+
+ (NOBRIDGE) ERROR  Database error: [TypeError: Cannot read property 'rows' of undefined]

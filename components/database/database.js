@@ -53,9 +53,15 @@ const executeSql = async (query, params = []) => {
       await initDatabase();
     }
 
-    return await db.withExclusiveTransactionAsync(async (tx) => {
-      return await tx.execAsync(query, params);
+    let result;
+
+    await db.withExclusiveTransactionAsync(async (tx) => {
+      result = await tx.execAsync(query, params);
     });
+
+    // Normalize the result structure for SELECT queries
+    const rows = result?.rows ?? [];
+    return { rows };
   } catch (error) {
     console.error("SQL execution error:", error);
     throw error;

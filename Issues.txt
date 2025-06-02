@@ -8,3 +8,5 @@ Unable to resolve "prop-types" from "node_modules\react-native-swipe-list-view\c
     Solution:  use db.withExclusiveTransactionAsync inside of database.js instead of db.withTransactionAsync
 
  (NOBRIDGE) ERROR  Database error: [TypeError: Cannot read property 'rows' of undefined]
+
+    Solution:  update executeSql function within database.js to help normalize the result structure for SELECT queries

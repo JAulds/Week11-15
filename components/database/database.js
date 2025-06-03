@@ -53,15 +53,27 @@ const executeSql = async (query, params = []) => {
       await initDatabase();
     }
 
-    let result;
+    let results;
 
     await db.withExclusiveTransactionAsync(async (tx) => {
-      result = await tx.execAsync(query, params);
+      results = await tx.execAsync(query, params);
     });
 
-    // Normalize the result structure for SELECT queries
-    const rows = result?.rows ?? [];
-    return { rows };
+    // execAsync returns an array of results per statement
+    if (!results || results.length === 0) {
+      return { rows: { _array: [] }, insertId: null };
+    }
+
+    const firstResult = results[0];
+
+    // Normalize rows
+    const rows = firstResult.rows ?? { _array: [] };
+
+    return {
+      rows,
+      insertId: firstResult.insertId ?? null,
+      rowsAffected: firstResult.rowsAffected ?? 0,
+    };
   } catch (error) {
     console.error("SQL execution error:", error);
     throw error;

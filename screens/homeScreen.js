@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
+  Button,
   StyleSheet,
   TextInput,
   Image,
@@ -21,7 +22,7 @@ import { Picker } from "@react-native-picker/picker";
 const HomeScreen = ({ route }) => {
   // State management
   const [hasCameraPermission, setHasCameraPermission] = useState(null);
-  const [camera, setCamera] = useState(null);
+  const cameraRef = useRef(null); // <-- useRef instead of useState for camera ref
   const [image, setImage] = useState(null);
   const [description, setDescription] = useState("");
   const [journals, setJournals] = useState([]);
@@ -71,13 +72,13 @@ const HomeScreen = ({ route }) => {
 
   // Take picture with camera
   const takePicture = async () => {
-    if (!camera) return;
+    if (!cameraRef.current) return;
 
     try {
-      const { uri } = await camera.takePictureAsync({
+      const photo = await cameraRef.current.takePictureAsync({
         quality: 0.8,
       });
-      setImage(uri);
+      setImage(photo.uri);
       setIsCameraOpen(false);
     } catch (error) {
       console.error("Camera error:", error);
@@ -234,11 +235,7 @@ const HomeScreen = ({ route }) => {
       {/* Camera Modal */}
       <Modal visible={isCameraOpen} animationType="slide">
         <View style={styles.cameraContainer}>
-          <Camera
-            style={styles.camera}
-            ref={(ref) => setCamera(ref)}
-            ratio="16:9"
-          />
+          <Camera style={styles.camera} ref={cameraRef} ratio="16:9" />
           <View style={styles.cameraButtons}>
             <TouchableOpacity
               style={styles.captureButton}
@@ -355,63 +352,49 @@ const HomeScreen = ({ route }) => {
                   source={{ uri: item.image }}
                   style={styles.journalImage}
                 />
-                <View style={styles.journalDetails}>
+                <View style={styles.journalTextContainer}>
                   <Text style={styles.journalDescription}>
                     {item.description}
                   </Text>
-                  <View style={styles.journalMeta}>
-                    <Text style={styles.journalCategory}>{item.category}</Text>
-                    <Text style={styles.journalDate}>
-                      {new Date(item.date).toLocaleDateString()}
-                    </Text>
-                  </View>
+                  <Text style={styles.journalCategory}>{item.category}</Text>
+                </View>
+                <View style={styles.journalButtons}>
+                  <Button
+                    title="Edit"
+                    onPress={() => {
+                      setEditingId(item.id);
+                      setImage(item.image);
+                      setDescription(item.description);
+                      setCategory(item.category);
+                    }}
+                    color="#007bff"
+                  />
+                  <Button
+                    title="Delete"
+                    onPress={() => deleteJournal(item.id)}
+                    color="#ff4444"
+                  />
                 </View>
               </View>
             )}
-            renderHiddenItem={({ item }) => (
-              <View style={styles.hiddenButtons}>
-                <TouchableOpacity
-                  style={[styles.hiddenButton, styles.editButton]}
-                  onPress={() => {
-                    setEditingId(item.id);
-                    setDescription(item.description);
-                    setImage(item.image);
-                    setCategory(item.category);
-                  }}
-                >
-                  <Text style={styles.hiddenButtonText}>Edit</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.hiddenButton, styles.deleteButton]}
-                  onPress={() => deleteJournal(item.id)}
-                >
-                  <Text style={styles.hiddenButtonText}>Delete</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-            rightOpenValue={-150}
-            disableRightSwipe
-            showsVerticalScrollIndicator={false}
+            disableRightSwipe={true}
+            rightOpenValue={-75}
+            previewRowKey={"0"}
+            previewOpenValue={-40}
+            previewOpenDelay={3000}
           />
         ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>
-              {category === "All"
-                ? "No journal entries yet. Add your first entry above!"
-                : `No entries in ${category} category`}
-            </Text>
-          </View>
+          <Text style={styles.noJournalsText}>No journal entries found.</Text>
         )}
       </View>
     </KeyboardAvoidingView>
   );
 };
 
-// Styles remain the same as in your original code
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "#fff",
   },
   loadingContainer: {
     flex: 1,
@@ -427,232 +410,190 @@ const styles = StyleSheet.create({
   cameraContainer: {
     flex: 1,
     backgroundColor: "black",
+    justifyContent: "flex-end",
   },
   camera: {
     flex: 1,
   },
   cameraButtons: {
-    position: "absolute",
-    bottom: 30,
-    width: "100%",
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "space-around",
+    paddingVertical: 15,
+    backgroundColor: "#00000088",
     alignItems: "center",
-    paddingHorizontal: 20,
   },
   captureButton: {
-    width: 70,
+    borderWidth: 2,
+    borderColor: "#fff",
+    borderRadius: 50,
     height: 70,
-    borderRadius: 35,
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
-    borderWidth: 3,
-    borderColor: "white",
+    width: 70,
     justifyContent: "center",
     alignItems: "center",
   },
   captureButtonInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "white",
+    backgroundColor: "#fff",
+    height: 50,
+    width: 50,
+    borderRadius: 25,
   },
   inputContainer: {
-    backgroundColor: "white",
-    padding: 20,
-    margin: 15,
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
+    paddingHorizontal: 15,
+    paddingTop: 10,
+    backgroundColor: "#f9f9f9",
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 15,
-    color: "#333",
+    marginVertical: 10,
   },
   previewImage: {
     width: "100%",
     height: 200,
-    borderRadius: 8,
-    marginBottom: 15,
+    borderRadius: 10,
   },
   imagePlaceholder: {
-    width: "100%",
     height: 200,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
   },
   buttonGroup: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 15,
+    justifyContent: "space-around",
+    marginVertical: 10,
   },
   imageButton: {
-    backgroundColor: "#4285f4",
-    padding: 10,
+    backgroundColor: "#007bff",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
     borderRadius: 5,
-    width: "48%",
-    alignItems: "center",
   },
   buttonText: {
     color: "white",
     fontWeight: "bold",
   },
   input: {
+    borderColor: "#ccc",
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 5,
-    padding: 12,
-    marginBottom: 15,
-    fontSize: 16,
+    borderRadius: 10,
+    padding: 10,
     textAlignVertical: "top",
+    fontSize: 16,
+    backgroundColor: "white",
   },
   pickerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 15,
+    marginTop: 10,
   },
   pickerLabel: {
-    marginRight: 10,
     fontSize: 16,
+    fontWeight: "600",
+    marginRight: 10,
   },
   pickerWrapper: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#ccc",
     borderRadius: 5,
+    overflow: "hidden",
+    backgroundColor: "white",
   },
   picker: {
-    height: 50,
+    height: 40,
+    width: "100%",
   },
   saveButton: {
-    backgroundColor: "#34a853",
-    padding: 15,
-    borderRadius: 5,
-    alignItems: "center",
-    marginBottom: 10,
+    backgroundColor: "#28a745",
+    paddingVertical: 12,
+    marginTop: 15,
+    borderRadius: 8,
   },
   saveButtonText: {
     color: "white",
+    textAlign: "center",
     fontWeight: "bold",
-    fontSize: 16,
+    fontSize: 18,
   },
   cancelButton: {
-    backgroundColor: "#ea4335",
-    padding: 15,
-    borderRadius: 5,
-    alignItems: "center",
+    marginTop: 10,
+    paddingVertical: 12,
+    backgroundColor: "#dc3545",
+    borderRadius: 8,
   },
   cancelButtonText: {
     color: "white",
+    textAlign: "center",
     fontWeight: "bold",
-    fontSize: 16,
+    fontSize: 18,
   },
   listContainer: {
     flex: 1,
-    backgroundColor: "white",
-    padding: 15,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 5,
+    paddingHorizontal: 15,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#ddd",
   },
   filterContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 10,
   },
   filterLabel: {
-    marginRight: 10,
     fontSize: 16,
+    fontWeight: "600",
+    marginRight: 10,
   },
   filterPickerWrapper: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#ccc",
     borderRadius: 5,
+    backgroundColor: "white",
   },
   filterPicker: {
     height: 40,
+    width: "100%",
   },
   journalItem: {
-    backgroundColor: "white",
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 10,
     flexDirection: "row",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    alignItems: "center",
+    backgroundColor: "#fefefe",
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 8,
     elevation: 2,
   },
   journalImage: {
-    width: 80,
-    height: 80,
+    width: 70,
+    height: 70,
     borderRadius: 8,
+    marginRight: 10,
   },
-  journalDetails: {
+  journalTextContainer: {
     flex: 1,
-    marginLeft: 15,
-    justifyContent: "center",
   },
   journalDescription: {
-    fontSize: 16,
-    marginBottom: 5,
-  },
-  journalMeta: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    fontWeight: "bold",
   },
   journalCategory: {
-    color: "#4285f4",
-    fontWeight: "bold",
+    color: "#777",
+    marginTop: 4,
+    fontStyle: "italic",
   },
-  journalDate: {
-    color: "#666",
-  },
-  hiddenButtons: {
+  journalButtons: {
     flexDirection: "row",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    height: "100%",
+    justifyContent: "space-between",
+    width: 90,
   },
-  hiddenButton: {
-    justifyContent: "center",
-    alignItems: "center",
-    width: 75,
-    height: "100%",
-  },
-  editButton: {
-    backgroundColor: "#fbbc05",
-  },
-  deleteButton: {
-    backgroundColor: "#ea4335",
-  },
-  hiddenButtonText: {
-    color: "white",
-    fontWeight: "bold",
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  emptyStateText: {
-    fontSize: 16,
-    color: "#666",
+  noJournalsText: {
     textAlign: "center",
+    color: "#777",
+    marginTop: 20,
+    fontStyle: "italic",
   },
 });
 

@@ -10,3 +10,23 @@ Unable to resolve "prop-types" from "node_modules\react-native-swipe-list-view\c
  (NOBRIDGE) ERROR  Database error: [TypeError: Cannot read property 'rows' of undefined]
 
     Solution:  update executeSql function within database.js to help normalize the result structure for SELECT queries
+
+ ERROR  React.jsx: type is invalid -- expected a string (for built-in components) or a class/function (for composite components) but got: %s.%s object
+ ERROR  React.jsx: type is invalid -- expected a string (for built-in components) or a class/function (for composite components) but got: %s.%s object
+ ERROR  Warning: ReferenceError: Property 'Button' doesn't exist
+
+    Solution:  Import Button from react native, also make sure all libraries are installed
+
+ ERROR  React.jsx: type is invalid -- expected a string (for built-in components) or a class/function (for composite components) but got: %s.%s object
+
+ERROR  Warning: Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: object.
+
+Check the render method of `HomeScreen`.
+
+This error is located at:
+
+Call Stack
+  RCTModalHostView (<anonymous>)
+  RNSScreenContainer (<anonymous>)
+  RNCSafeAreaProvider (<anonymous>)
+  RNGestureHandlerRootView (<anonymous>)

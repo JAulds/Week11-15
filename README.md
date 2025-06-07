@@ -37,4 +37,4 @@ A React Native app built with Expo that allows users to document their meals by 
 
 ```bash
 git clone https://github.com/JAulds/Week11-15.git
-cd food-journal-app
+cd Week11-15
